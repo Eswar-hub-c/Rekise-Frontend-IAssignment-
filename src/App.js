@@ -70,7 +70,9 @@ const App = () => {
 
   const markerIcon1 = new L.Icon({
     iconUrl: require('./assets/Frame 334.png'), // Add your vessel icon here
-    iconSize: [35, 135,45],
+    iconSize: [35, 135],
+    rotationAngle: 45 // Rotate by 45 degrees
+
   });
   const markerIcon2 = new L.Icon({
     iconUrl: require('./assets/location_svgrepo.com (2).png'), // Add your vessel icon here
