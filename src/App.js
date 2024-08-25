@@ -1,15 +1,15 @@
-// src/App.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+
 const App = () => {
   const startCoords = [22.1696, 91.4996];
   const endCoords = [22.2637, 91.7159];
-  const speed = 20; // km/h
-  const refreshRate = 500; // 2 FPS (1000ms / 2)
-
+  const speed = 2000; // km/h
+  const refreshRate = 50; // 20 FPS (1000ms / 50)
   const [position, setPosition] = useState(startCoords);
+  const markerRef = useRef(null);
 
   useEffect(() => {
     const distance = calculateDistance(startCoords, endCoords); // km
@@ -17,7 +17,7 @@ const App = () => {
 
     let startTime = Date.now();
     const interval = setInterval(() => {
-      const elapsedTime = (Date.now() - startTime) / 1000; // seconds     
+      const elapsedTime = (Date.now() - startTime) / 1000; // seconds
       if (elapsedTime > duration) {
         setPosition(endCoords);
         clearInterval(interval);
@@ -29,6 +29,23 @@ const App = () => {
 
     return () => clearInterval(interval);
   }, []);
+  useEffect(() => {
+    const distance = calculateDistance(startCoords, endCoords); // km
+    const duration = (distance / speed) * 3600; // seconds
+    let startTime = Date.now();
+    const interval = setInterval(() => {
+      const elapsedTime = (Date.now() - startTime) / 1000; // seconds
+      if (elapsedTime > duration) {
+        setPosition(endCoords);
+        clearInterval(interval);
+        return;
+      }
+      const newPosition = calculateIntermediatePosition(startCoords, endCoords, elapsedTime / duration);
+      setPosition(newPosition);
+    }, 100); // Adjust the interval to your desired update rate
+
+    return () => clearInterval(interval); // Clean up on unmount
+}, [startCoords, endCoords, speed]); // Add dependencies
 
   const calculateDistance = (start, end) => {
     const R = 6371; // Radius of the Earth in km
@@ -51,8 +68,16 @@ const App = () => {
     ];
   };
 
-  const markerIcon = new L.Icon({
+  const markerIcon1 = new L.Icon({
     iconUrl: require('./assets/Frame 334.png'), // Add your vessel icon here
+    iconSize: [35, 135,45],
+  });
+  const markerIcon2 = new L.Icon({
+    iconUrl: require('./assets/location_svgrepo.com (2).png'), // Add your vessel icon here
+    iconSize: [35, 35],
+  });
+  const markerIcon = new L.Icon({
+    iconUrl: require('./assets/location_svgrepo.com (1).png'), // Add your vessel icon here
     iconSize: [35, 35],
   });
 
@@ -62,7 +87,13 @@ const App = () => {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
       />
-      <Marker position={position} icon={markerIcon} />
+      <Marker position={startCoords} icon={markerIcon2} /> {/* Start Marker */}
+      <Marker position={endCoords} icon={markerIcon} /> {/* End Marker */}
+      <Marker
+        position={position}
+        icon={markerIcon1}
+        ref={markerRef}
+      />
       <Polyline positions={[startCoords, position]} color="blue" />
     </MapContainer>
   );
